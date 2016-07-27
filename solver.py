@@ -40,7 +40,7 @@ def build_shifts_graph(df):
     vols = list(df.index)
     vols.remove('shift_needs')
     nx.set_node_attributes(g, 'supply', {v:-1 for v in vols})
-    g = add_dummy_supply_sink(g, ['supply'])
+    #g = add_dummy_supply_sink(g, ['supply'])
     return g
     
 
@@ -76,8 +76,42 @@ def add_dummy_supply_sink(g, attr_name, dummy_name='DummySinkNode'):
     return g
 
     
-def build_problem_from_graph(g):
-    pass
+def lp_assignment_from_pd(df, attr_name=['supply'], dummy_name='DummySinkNode'): 
+    """
+    Workhorse function for LP solution of transport problems represented in a graph. Currently only supports a single
+    node attribute, but will expand function in future to operate on a list of node attributes.
+    """    
+    g = build_shifts_graph(df)
+    g = add_dummy_supply_sink(g, attr_name)
+    
+    in_paths = defaultdict(list)
+    out_paths = defaultdict(list)
+    for p,q in g.edges_iter():
+        out_paths[p].append((p,q))
+        in_paths[q].append((p,q))
+    
+    vols = list(df.index)
+    vols.remove('shift_needs')
+    shifts = df.columns
+    
+    prob = pulp.LpProblem("Supply Chain", pulp.LpMinimize)
+    
+    x = pulp.LpVariable.dicts("takeShift", (vols, shifts), 
+                            lowBound = 0 ,
+                            upBound = 1,
+                            cat = pulp.LpInteger)
+    
+    # Objective: minimize the sum of the costs of all accepted shifts.
+    prob += sum(x[v][s]*g[v][s]['cost'] for v,s in g.edges_iter() if dummy_name not in v and dummy_name not in s), "objective"
+    
+    # Add constraint that net supply is satisfied across the graph.
+    for shift in shifts:
+        demand = nx.get_node_attributes(g, 'supply')[shift]
+        prob += demand - sum([x[v][s] for (v,s) in in_paths[shift]]) == 0, "satisfiedShiftConstr_{}".format(shift)
+    
+    prob.solve()
+    
+    return prob
     
 if __name__ == '__main__':
     import pandas as pd
