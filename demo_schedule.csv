@@ -1,0 +1,15 @@
+volunteer,day1|shift1,day1|shift2,day1|shift3,day2|shift4,day2|shift5,day2|shift6
+john,1,2,,,,
+jane,,1,2,,,
+jack,,,1,2,,
+julian,,,,1,2,
+jeff,,,,,1,2
+jorge,1,,2,,,
+jesus,,1,,2,3,
+jennifer,,,1,,2,
+jessica,3,,,1,,2
+jules,1,2,3,4,,
+joanne,,1,2,3,4,
+joe,,,1,2,3,4
+josephine,4,,,1,2,3
+jebediah,6,1,2,3,4,5
