@@ -32,7 +32,7 @@ def build_shifts_graph(df):
             if np.isnan(val):
                 continue
             day, shift = day_shift.split('|') # Not sure exactly what to do with this. I think day should be a node attr
-            g.add_edge(vol, day, {'shift_{}'.format(shift):int(val)})
+            g.add_edge(vol, day_shift, {'preference':int(val)})
     return g
 
 def build_problem_from_graph(g):
