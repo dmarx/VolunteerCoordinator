@@ -3,7 +3,7 @@ Solves volunteer coordination problems using linear programming.
 Target feature set:
 
 * Assigning volunteers to duty shifts, subject to preference constraints possibly including:
-    * Shift preferences
+    * Shift preferences (done)
     * Reducing number of shifts on same day for multi-day events
     * Adding preference to sequential shifts when there are multiple shifts on the same day. (I think that makes sense?)
     * Pairing people who want to work together
