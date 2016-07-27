@@ -28,13 +28,54 @@ def build_shifts_graph(df):
     g = nx.DiGraph()
     for day_shift in df.columns:
         for vol in df.index:
+            if vol == 'shift_needs':
+                continue
             val = df[day_shift][vol]
             if np.isnan(val):
                 continue
             day, shift = day_shift.split('|') # Not sure exactly what to do with this. I think day should be a node attr
-            g.add_edge(vol, day_shift, {'preference':int(val)})
+            g.add_edge(vol, day_shift, {'cost':int(val)})
+    d = dict(df.T['shift_needs'])
+    nx.set_node_attributes(g, 'supply', d)
+    vols = list(df.index)
+    vols.remove('shift_needs')
+    nx.set_node_attributes(g, 'supply', {v:-1 for v in vols})
+    g = add_dummy_supply_sink(g, ['supply'])
+    return g
+    
+
+def add_dummy_supply_sink(g, attr_name, dummy_name='DummySinkNode'):
+    """
+    Given a problem where demand != supply, we need to balance supply and demand by adding a node connected to all
+    supply or demand nodes to balance the difference. An edge directed towards this node essentially represents a recommendation 
+    for storage at the supply node or unsatisified demand at the demand node. For this problem, storage cost will be zero
+    but it does not necessarily need to be.
+    
+    Whether or not a dummy node is added, the input graph is always returned as a directed graph.
+    """
+    g0 = g.to_directed()
+    g = g.to_directed()
+    g.add_node(dummy_name)
+    balanced = True
+    for a in attr_name:
+        supply = 0
+        demand = 0
+        for n,v in nx.get_node_attributes(g, a).items():
+            if v>0:
+                g.add_edge(n, dummy_name, {'cost':0})
+                supply += v
+            elif v<0:
+                g.add_edge(dummy_name, n, {'cost':0})
+                demand += v
+        delta = supply + demand # demand is negative valued
+        if delta != 0:
+            balanced=False
+        nx.set_node_attributes(g, a, {dummy_name:-delta})
+    if balanced:
+        return g0
     return g
 
+    
 def build_problem_from_graph(g):
     pass
     
