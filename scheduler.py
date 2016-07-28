@@ -113,9 +113,21 @@ def lp_assignment_from_pd(df, attr_name=['supply'], dummy_name='DummySinkNode'):
     
     return prob
     
+def extract_schedule(solution):
+    results = [(str(v).split('_'), v.varValue) for v in prob.variables() if v.varValue==1]
+    [a.append(v) for a,v in results]
+    dt = pd.DataFrame([a for a,v in results])
+    dt.columns = ['action','volunteer','shift','value']
+    dt = dt.sort_values(by='shift')
+    dt['x'] = 'x'
+    return dt.pivot(index='volunteer', columns='shift', values='x')
+    
 if __name__ == '__main__':
     import pandas as pd
     
     fname = 'demo_schedule.csv'
     df = pd.DataFrame.from_csv(fname)
+    solution = lp_assignment_from_pd(df)
+    sched = extract_schedule(solution)
+    sched.to_csv('demo_scolution.csv')
     
