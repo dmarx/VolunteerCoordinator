@@ -1,15 +1,7 @@
 import numpy as np
-import scipy as sp
-import matplotlib.pyplot as plt
 import networkx as nx
 import pulp
-from collections import Counter, defaultdict
-
-from scipy.stats import poisson # for clique problem
-from networkx.algorithms import bipartite # for clique problem
-import random # for the demo
-import gc # for memory management associated with the demo
-import time # performance evaluation
+from collections import defaultdict
 
 # Shift assignment and housing assignment are essentially separate problems
 # Each problem should have an associated utility for identifying what weakness needs to be satisfied
