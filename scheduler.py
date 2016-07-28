@@ -25,7 +25,7 @@ def build_shifts_graph(df):
             val = df[day_shift][vol]
             if np.isnan(val):
                 continue
-            day, shift = day_shift.split('|') # Not sure exactly what to do with this. I think day should be a node attr
+            #day, shift = day_shift.split('|') # Not sure exactly what to do with this. I think day should be a node attr
             g.add_edge(vol, day_shift, {'cost':int(val)})
     d = dict(df.T['shift_needs'])
     nx.set_node_attributes(g, 'supply', d)
@@ -112,7 +112,33 @@ def extract_schedule(solution):
     dt.columns = ['action','volunteer','shift','value']
     dt = dt.sort_values(by='shift')
     dt['x'] = 'x'
-    return dt.pivot(index='volunteer', columns='shift', values='x')
+    return {'for_volunteers':dt.pivot(index='volunteer', columns='shift', values='x'), 
+            'for_organizers':dt[['shift','volunteer']]}
+    # This output format is convenient for the volunteers: they can check their name on the side
+    # and quickly find their shift. I should really do a version that is convenient for me or
+    # whoever is running things. Right now, just sorting on the 'shift' column and returning dt
+    # basically does it, but I feel like there's a more appealing way I could do it. I should
+    # also merge in contact information or something.
+    #
+    # Additionally, I should have a method that takes an existing solution as input and let's me specify
+    # shifts that won't be satisfied so I can find alternates (by fixing every other position in the graph
+    # (or at least the ones that have already been satisfied) and finding a new solution that doesn't impose
+    # too much on everyone else). This may require a new objective function: instead of (or in addition to) 
+    # minimizing the overall inconvenience, I could try to minimize the number of people I inconvenience 
+    # with respect to the original optimal solution. 
+    #
+    # Also, I still need a utility for identifying unsatisfied demand so I can figure out what shifts I still 
+    # need to fill while I'm finding volunteers. This probably just entails running the solver and determining
+    # which shifts are connected to the dummy sink. Would be useful to know the cost-by-day as well, so I could
+    # see which days seem to be unpopular and try to find people to work those days for whom it is more convenient
+    # than the people in the current solution.
+    #
+    # It would probably be a good idea to maintain some kind of database component as well so I can associated
+    # contact methods (emails, phone numbers) with volunteers. Maybe even automate asking them what shifts work
+    # and so on. Shit, I could turn this into a whole website.
+    #
+    # I should move these ideas to github. If I end up turning this into a website, I should probably take this off 
+    # github. Maybe move it to bitbucket where it'll be private.
     
 if __name__ == '__main__':
     import pandas as pd
@@ -121,5 +147,6 @@ if __name__ == '__main__':
     df = pd.DataFrame.from_csv(fname)
     solution = lp_assignment_from_pd(df)
     sched = extract_schedule(solution)
-    sched.to_csv('demo_scolution.csv')
+    sched['for_volunteers'].to_csv('demo_solution-volunteers.csv')
+    sched['for_organizers'].to_csv('demo_solution-organizers.csv')
     
